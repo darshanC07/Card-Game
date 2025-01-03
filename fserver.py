@@ -48,6 +48,10 @@ def on_join_room(data):
 def on_leave_room(data):
     socketio.emit("playerLeft",data,to=room,include_self=False)
     
+@socketio.on('messageSentToRoom')    
+def onMessageSentToRoom(data):
+    socketio.emit("newMessage",data,to=room)
+
 @socketio.on('cardPlayed')
 def cardPlayerd(card):
     global room
