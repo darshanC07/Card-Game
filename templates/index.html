@@ -4,101 +4,219 @@
     <title>Multiplayer Game</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
     <style>
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        font-family: Arial, sans-serif;
+        background-color: #f0f2f5;
+        overflow: hidden;
+      }
+      .mainContainer {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .chattingArea {
+        background-color: #2c3e50;
+        padding: 20px;
+        border-right: 1px solid #34495e;
+        color: white;
+        height: calc(100vh - 40px);
+      }
+      .gameArea {
+        padding: 20px;
+        height: calc(100vh - 40px);
+        background-color: #ecf0f1;
+        position: relative;
+      }
       .userCardDeck {
         display: flex;
         align-items: center;
-        position: fixed;
+        position: absolute;
         bottom: 20px;
+        left: 20px;
+        gap: 15px;
+        width: calc(100% - 40px);
       }
       .card {
-        height: 300px;
-        width: 200px;
-        background-color: rgb(177, 173, 173);
-        border: 2px solid black;
-        border-radius: 5px;
-        padding: 10px;
+        height: 260px;
+        width: 180px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 12px;
+        flex-shrink: 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+      }
+      .card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        border-color: #3498db;
       }
       .option {
-        border: 1px solid black;
-        background-color: yellow;
-        width: 80px;
+        border: 1px solid #bdc3c7;
+        background-color: #3498db;
+        min-width: 85px;
+        max-width: 150px;
         text-align: center;
-        padding: 10px;
+        padding: 3px 8px;
+        margin: 2px 0;
+        border-radius: 4px;
+        font-size: 0.75em;
+        color: white;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .option:hover {
+        background-color: #2980b9;
+        white-space: normal;
+        word-wrap: break-word;
+        position: relative;
+        z-index: 1;
       }
       .gameplay {
-        height: 50%;
+        height: 340px;
         width: 100%;
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        overflow-y: auto;
+      }
+      .gameplay .card {
+        height: auto;
+        min-height: 220px;
+        margin: 20px;
+      }
+      .gameplay .option {
+        white-space: normal;
+        word-wrap: break-word;
+      }
+      .cardType {
+        font-weight: bold;
+        color: #2c3e50;
+        font-size: 0.9em;
+        padding: 5px 8px;
+        background-color: #e8f4fc;
+        border-radius: 4px;
+        margin-bottom: 8px;
+      }
+      .cardContent {
+        font-size: 0.9em;
+        line-height: 1.4;
+        color: #2c3e50;
+        flex: 1;
+        margin: 8px 0;
+        padding: 5px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
+        overflow-y: auto;
+      }
+      .options {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        margin-top: auto;
+        padding-top: 6px;
+      }
+      input[type="text"] {
+        padding: 10px;
+        margin: 10px 0;
+        width: 200px;
+        border: 1px solid #34495e;
+        border-radius: 6px;
+        background-color: #34495e;
+        color: white;
+      }
+      input[type="text"]::placeholder {
+        color: #bdc3c7;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #27ae60;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: bold;
+      }
+      button:hover {
+        background-color: #219a52;
+        transform: translateY(-2px);
+      }
+      h2 {
+        color: #2c3e50;
+        margin: 0 0 20px 0;
+        font-size: 24px;
+      }
+      #playerName {
+        color: #2c3e50;
+        font-size: 16px;
+        margin: 0;
+        padding: 20px;
+      }
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 2px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
       }
     </style>
   </head>
   <body>
-    <!-- <br />
-    <label for="message">Enter Name</label>
-    <input type="text" id="message" />
-    <button onclick="saveName()">Save</button>
-    <button onclick="sendMessage()">Send Message</button>
-    <div class="receivedMsg"></div> -->
-
-    <label>Enter your Name : </label>
-    <input type="text" id="name" />
-    <button onclick="getName()">Save</button>
-
-    <h2>Card Played</h2>
-    <div class="gameplay">
-      <h5 id="playerName"></h5>
-    </div>
-
-    <div class="userCardDeck">
-      <!-- <div class="card">
-        <h3 class="cardType"></h3>
-        <p class="cardContent"></p>
-        <div class="options">
+    <div class="mainContainer">
+      <div class="chattingArea">
+        <label>Enter your Name : </label>
+        <input type="text" id="name" placeholder="Type your name..." />
+        <button onclick="getName()">Save</button>
+      </div>
+      <div class="gameArea">
+        <!-- <h2>Card Played</h2> -->
+        <div class="gameplay">
+          <h5 id="playerName"></h5>
         </div>
-      </div> -->
+        <div class="userCardDeck"></div>
+      </div>
     </div>
-
     <script type="text/javascript">
       var socket = io();
-      // let receivedMessages=""
-      // document.addEventListener("DOMContentLoaded", (event) => {
-
-      //   socket.on("message", function (msg) {
-      //       receivedMessages = receivedMessages+"Message received: " + msg+"<br>";
-      //       document.getElementsByClassName("receivedMsg")[0].innerHTML = receivedMessages;
-      //   //   console.log("Message received: " + msg);
-      //   });
-
-      // });
-
       let room = "drafting committee"
-      let userName ;
+      let userName;
       socket.on("connect", function () {
           console.log("Connected to server");
-
       });
-
       socket.on("disconnect", function () {
           console.log("Disconnected from server");
           socket.emit("leave_room",userName+" disconnected")
       });
-
       socket.on("playerJoined",function(data){
         console.log(data)
       })
       socket.on("playerLeft",function(data){
         console.log(data)
       })
-
-
       socket.on("otherPlayersCard",function(data){
         console.log(data)
         addCardToScreen(data)
       })
-
       let userCardDeck = {{cardDeck | tojson}}
-      // console.log(userCardDeck)
-      // let firstCard = userCardDeck[0]
-      // console.log(firstCard)
       let userCardDeckContainer = document.getElementsByClassName("userCardDeck")[0]
       for(let i = 0;i<5;i++){
         let cardContainer = document.createElement("div")
@@ -108,8 +226,6 @@
         let optionsContainer = document.createElement("div")
         if(userCardDeck[i]["isQuestion"]==="True"){
           cardTypeContainer.innerText = "Module : "+userCardDeck[i]["module"]
-
-
           optionsContainer.className = "options"
           for(let m = 1;m<=4;m++){
             let option = document.createElement("div")
@@ -123,20 +239,16 @@
         let cardContentContainer = document.createElement("p")
         cardContentContainer.className = "cardContent"
         cardContentContainer.innerText = userCardDeck[i]["content"]
-
         cardContainer.appendChild(cardTypeContainer)
         cardContainer.appendChild(cardContentContainer)
         if(userCardDeck[i]["isQuestion"]==="True"){
           cardContainer.appendChild(optionsContainer)
         }
         cardContainer.addEventListener("click",()=>{
-          socket.emit("cardPlayed", userCardDeck[i]
-          )
+          socket.emit("cardPlayed", userCardDeck[i])
         })
         userCardDeckContainer.appendChild(cardContainer)
-
       }
-
       function addCardToScreen(data){
         let cardContainer = document.createElement("div")
         cardContainer.className = "card"
@@ -145,8 +257,6 @@
         let optionsContainer = document.createElement("div")
         if(data["isQuestion"]==="True"){
           cardTypeContainer.innerText = "Module : "+data["module"]
-
-
           optionsContainer.className = "options"
           for(let m = 1;m<=4;m++){
             let option = document.createElement("div")
@@ -160,7 +270,6 @@
         let cardContentContainer = document.createElement("p")
         cardContentContainer.className = "cardContent"
         cardContentContainer.innerText = data["content"]
-
         cardContainer.appendChild(cardTypeContainer)
         cardContainer.appendChild(cardContentContainer)
         if(data["isQuestion"]==="True"){
@@ -175,12 +284,10 @@
         }
         document.getElementsByClassName("gameplay")[0].appendChild(cardContainer)
       }
-
       function getName(){
        userName = document.getElementById("name").value
        console.log(userName)
        if(userName && room){
-            // console.log(typeof(userName))
             let roomData = {"userName" : userName,"room" : room};
             socket.emit("join_room",roomData)
             console.log("connected to "+room)
