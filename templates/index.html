@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Multiplayer Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <style>
+      .userCardDeck {
+        display: flex;
+        align-items: center;
+        position: fixed;
+        bottom: 20px;
+      }
+      .card {
+        height: 300px;
+        width: 200px;
+        background-color: rgb(177, 173, 173);
+        border: 2px solid black;
+        border-radius: 5px;
+        padding: 10px;
+      }
+      .option {
+        border: 1px solid black;
+        background-color: yellow;
+        width: 80px;
+        text-align: center;
+        padding: 10px;
+      }
+      .gameplay {
+        height: 50%;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- <br />
+    <label for="message">Enter Name</label>
+    <input type="text" id="message" />
+    <button onclick="saveName()">Save</button>
+    <button onclick="sendMessage()">Send Message</button>
+    <div class="receivedMsg"></div> -->
+
+    <label>Enter your Name : </label>
+    <input type="text" id="name" />
+    <button onclick="getName()">Save</button>
+
+    <h2>Card Played</h2>
+    <div class="gameplay">
+      <h5 id="playerName"></h5>
+    </div>
+
+    <div class="userCardDeck">
+      <!-- <div class="card">
+        <h3 class="cardType"></h3>
+        <p class="cardContent"></p>
+        <div class="options">
+        </div>
+      </div> -->
+    </div>
+
+    <script type="text/javascript">
+      var socket = io();
+      // let receivedMessages=""
+      // document.addEventListener("DOMContentLoaded", (event) => {
+
+      //   socket.on("message", function (msg) {
+      //       receivedMessages = receivedMessages+"Message received: " + msg+"<br>";
+      //       document.getElementsByClassName("receivedMsg")[0].innerHTML = receivedMessages;
+      //   //   console.log("Message received: " + msg);
+      //   });
+
+      // });
+
+      let room = "drafting committee"
+      let userName ;
+      socket.on("connect", function () {
+          console.log("Connected to server");
+
+      });
+
+      socket.on("disconnect", function () {
+          console.log("Disconnected from server");
+          socket.emit("leave_room",userName+" disconnected")
+      });
+
+      socket.on("playerJoined",function(data){
+        console.log(data)
+      })
+      socket.on("playerLeft",function(data){
+        console.log(data)
+      })
+
+
+      socket.on("otherPlayersCard",function(data){
+        console.log(data)
+        addCardToScreen(data)
+      })
+
+      let userCardDeck = {{cardDeck | tojson}}
+      // console.log(userCardDeck)
+      // let firstCard = userCardDeck[0]
+      // console.log(firstCard)
+      let userCardDeckContainer = document.getElementsByClassName("userCardDeck")[0]
+      for(let i = 0;i<5;i++){
+        let cardContainer = document.createElement("div")
+        cardContainer.className = "card"
+        let cardTypeContainer = document.createElement("div")
+        cardTypeContainer.className = "cardType"
+        let optionsContainer = document.createElement("div")
+        if(userCardDeck[i]["isQuestion"]==="True"){
+          cardTypeContainer.innerText = "Module : "+userCardDeck[i]["module"]
+
+
+          optionsContainer.className = "options"
+          for(let m = 1;m<=4;m++){
+            let option = document.createElement("div")
+            option.className = "option"
+            option.innerText = userCardDeck[i]["options"][m]
+            optionsContainer.appendChild(option)
+          }
+        }else{
+          cardTypeContainer.innerText = "Module : "+userCardDeck[i]["type"]
+        }
+        let cardContentContainer = document.createElement("p")
+        cardContentContainer.className = "cardContent"
+        cardContentContainer.innerText = userCardDeck[i]["content"]
+
+        cardContainer.appendChild(cardTypeContainer)
+        cardContainer.appendChild(cardContentContainer)
+        if(userCardDeck[i]["isQuestion"]==="True"){
+          cardContainer.appendChild(optionsContainer)
+        }
+        cardContainer.addEventListener("click",()=>{
+          socket.emit("cardPlayed", userCardDeck[i]
+          )
+        })
+        userCardDeckContainer.appendChild(cardContainer)
+
+      }
+
+      function addCardToScreen(data){
+        let cardContainer = document.createElement("div")
+        cardContainer.className = "card"
+        let cardTypeContainer = document.createElement("div")
+        cardTypeContainer.className = "cardType"
+        let optionsContainer = document.createElement("div")
+        if(data["isQuestion"]==="True"){
+          cardTypeContainer.innerText = "Module : "+data["module"]
+
+
+          optionsContainer.className = "options"
+          for(let m = 1;m<=4;m++){
+            let option = document.createElement("div")
+            option.className = "option"
+            option.innerText = data["options"][m]
+            optionsContainer.appendChild(option)
+          }
+        }else{
+          cardTypeContainer.innerText = "Module : "+data["type"]
+        }
+        let cardContentContainer = document.createElement("p")
+        cardContentContainer.className = "cardContent"
+        cardContentContainer.innerText = data["content"]
+
+        cardContainer.appendChild(cardTypeContainer)
+        cardContainer.appendChild(cardContentContainer)
+        if(data["isQuestion"]==="True"){
+          cardContainer.appendChild(optionsContainer)
+        }
+        let lastElement = document.getElementsByClassName("gameplay")[0].lastElementChild
+        if(document.getElementsByClassName("gameplay")[0].childElementCount>1){
+          if(lastElement.className === "card"){
+            document.getElementsByClassName("gameplay")[0].removeChild(lastElement)
+            document.getElementsByClassName("gameplay")[0].appendChild(cardContainer)
+          }
+        }
+        document.getElementsByClassName("gameplay")[0].appendChild(cardContainer)
+      }
+
+      function getName(){
+       userName = document.getElementById("name").value
+       console.log(userName)
+       if(userName && room){
+            // console.log(typeof(userName))
+            let roomData = {"userName" : userName,"room" : room};
+            socket.emit("join_room",roomData)
+            console.log("connected to "+room)
+          }
+      }
+    </script>
+  </body>
+</html>
