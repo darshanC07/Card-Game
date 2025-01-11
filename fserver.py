@@ -42,7 +42,12 @@ def on_join_room(data):
     room = data['room']
     print(room)
     join_room(room)
-    socketio.emit("playerJoined",f"{username} has joined room",to=room,include_self=False)
+    playerData = {
+        'username' : username
+    }
+    # connectedUsers.add(username)
+    # socketio.emit("connectedUsers",connectedUsers,to=room)
+    socketio.emit("playerJoined",playerData,to=room,include_self=False)
 
 @socketio.on('leave_room')
 def on_leave_room(data):
@@ -53,9 +58,9 @@ def onMessageSentToRoom(data):
     socketio.emit("newMessage",data,to=room)
 
 @socketio.on('cardPlayed')
-def cardPlayerd(card):
+def cardPlayerd(data):
     global room
-    print(card)
-    socketio.emit("otherPlayersCard",card,to=room,include_self=False)
+    print(data)
+    socketio.emit("otherPlayersCard",data,to=room,include_self=False)
 if __name__ == '__main__':
     socketio.run(app, debug=True)
