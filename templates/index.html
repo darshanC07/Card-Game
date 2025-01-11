@@ -90,6 +90,10 @@
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
         overflow-y: auto;
+        display: flex;
+        padding-top: 15px;
+        /* grid-template-columns: auto auto; */
+        justify-content: space-evenly;
       }
       .gameplay .card {
         height: auto;
@@ -176,6 +180,21 @@
         margin: 0;
         padding: 20px;
       }
+      .members {
+        display: grid;
+        /* grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); */
+        grid-template-columns: 60px 60px 60px;
+        gap: 20px;
+        margin-left: 20px;
+      }
+
+      .member {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
       ::-webkit-scrollbar {
         width: 4px;
       }
@@ -197,22 +216,40 @@
         <label>Enter your Name : </label>
         <input type="text" id="name" placeholder="Type your name..." />
         <button onclick="getName()">Save</button>
-        <div class="messagingArea">
-          
-        </div>
-        <div class="message" style="display: flex;align-items: center; column-gap: 5px;">
-
-          <input type="text" placeholder="Type message" id="msg">
-          <svg id="send" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 48 48"><path fill="currentColor" d="M7.262 4.244c-1.787-.893-3.765.812-3.146 2.711L8.13 19.26a2 2 0 0 0 1.573 1.352l15.86 2.643c.835.14.835 1.34 0 1.48L9.704 27.378a2 2 0 0 0-1.573 1.352L4.116 41.042c-.62 1.9 1.359 3.605 3.146 2.712l35.494-17.742c1.659-.83 1.659-3.197 0-4.026L7.262 4.244Z"/></svg>
+        <div class="messagingArea"></div>
+        <div
+          class="message"
+          style="display: flex; align-items: center; column-gap: 5px"
+        >
+          <input type="text" placeholder="Type message" id="msg" />
+          <svg
+            id="send"
+            xmlns="http://www.w3.org/2000/svg"
+            width="28"
+            height="28"
+            viewBox="0 0 48 48"
+          >
+            <path
+              fill="currentColor"
+              d="M7.262 4.244c-1.787-.893-3.765.812-3.146 2.711L8.13 19.26a2 2 0 0 0 1.573 1.352l15.86 2.643c.835.14.835 1.34 0 1.48L9.704 27.378a2 2 0 0 0-1.573 1.352L4.116 41.042c-.62 1.9 1.359 3.605 3.146 2.712l35.494-17.742c1.659-.83 1.659-3.197 0-4.026L7.262 4.244Z"
+            />
+          </svg>
         </div>
       </div>
       <div class="gameArea">
         <!-- <h2>Card Played</h2> -->
         <div class="gameplay">
-          <h5 id="playerName"></h5>
+          <div>
+            <h2 style="margin-left: 20px">Room Members</h2>
+            <div class="members" style="margin-left: 20px"></div>
+          </div>
+          <div class="cardPlayer">
+            <div id="player"></div>
+          </div>
         </div>
         <div class="userCardDeck"></div>
       </div>
+      
     </div>
     <script type="text/javascript">
       var socket = io();
@@ -226,17 +263,39 @@
           socket.emit("leave_room",userName+" disconnected")
       });
       socket.on("playerJoined",function(data){
+        let playerJoinedMessage = data['username'] + " has joined room"
         let cont = document.createElement("p")
-        cont.innerText = data
+        cont.innerText = playerJoinedMessage
         document.getElementsByClassName("messagingArea")[0].appendChild(cont)
-        console.log(data)
+        // console.log(data)
+        let playerCont = document.createElement('div')
+        playerCont.className = "member"
+        let playerImgCont = document.createElement('div')
+        playerImgCont.innerHTML = `<svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 1280 1536"
+                  "
+                >
+                  <path
+                    fill="currentColor"
+                    d="M1280 1271q0 109-62.5 187t-150.5 78H213q-88 0-150.5-78T0 1271q0-85 8.5-160.5t31.5-152t58.5-131t94-89T327 704q131 128 313 128t313-128q76 0 134.5 34.5t94 89t58.5 131t31.5 152t8.5 160.5zm-256-887q0 159-112.5 271.5T640 768T368.5 655.5T256 384t112.5-271.5T640 0t271.5 112.5T1024 384z"
+                  />
+                </svg>`
+        playerCont.appendChild(playerImgCont)
+        let playerName = document.createElement('span')
+        playerName.innerText = data['username']
+        playerCont.appendChild(playerName)
+        document.getElementsByClassName('members')[0].appendChild(playerCont)
       })
       socket.on("playerLeft",function(data){
         console.log(data)
       })
       socket.on("otherPlayersCard",function(data){
         console.log(data)
-        addCardToScreen(data)
+        addCardToScreen(data['card'])
+        document.getElementById('player').innerText = data['player'] + " played this card"
       })
       let userCardDeck = {{cardDeck | tojson}}
       let userCardDeckContainer = document.getElementsByClassName("userCardDeck")[0]
@@ -249,7 +308,7 @@
         if(userCardDeck[i]["isQuestion"]==="True"){
           cardTypeContainer.innerText = "Module : "+userCardDeck[i]["module"]
           optionsContainer.className = "options"
-          for(let m = 1;m<=4;m++){
+          for(let m = 0;m<4;m++){
             let option = document.createElement("div")
             option.className = "option"
             option.innerText = userCardDeck[i]["options"][m]
@@ -267,7 +326,10 @@
           cardContainer.appendChild(optionsContainer)
         }
         cardContainer.addEventListener("click",()=>{
-          socket.emit("cardPlayed", userCardDeck[i])
+          socket.emit("cardPlayed", {
+            'player' : userName,
+            'card' : userCardDeck[i]
+          })
         })
         userCardDeckContainer.appendChild(cardContainer)
       }
@@ -283,6 +345,10 @@
         document.getElementsByClassName("messagingArea")[0].appendChild(cont)
       })
 
+      socket.on('connectedUsers',function(data){
+
+      })
+
       function addCardToScreen(data){
         let cardContainer = document.createElement("div")
         cardContainer.className = "card"
@@ -292,10 +358,17 @@
         if(data["isQuestion"]==="True"){
           cardTypeContainer.innerText = "Module : "+data["module"]
           optionsContainer.className = "options"
-          for(let m = 1;m<=4;m++){
+          for(let m = 0;m<4;m++){
             let option = document.createElement("div")
             option.className = "option"
             option.innerText = data["options"][m]
+            option.addEventListener('click',function(){
+              if(m+1==data['correctAnswer']){
+                alert("Correct answer")
+              } else{
+                alert("Wrong Answer")
+              }
+            })
             optionsContainer.appendChild(option)
           }
         }else{
@@ -309,14 +382,14 @@
         if(data["isQuestion"]==="True"){
           cardContainer.appendChild(optionsContainer)
         }
-        let lastElement = document.getElementsByClassName("gameplay")[0].lastElementChild
-        if(document.getElementsByClassName("gameplay")[0].childElementCount>1){
+        let lastElement = document.getElementsByClassName("cardPlayer")[0].lastElementChild
+        if(document.getElementsByClassName("cardPlayer")[0].childElementCount>1){
           if(lastElement.className === "card"){
-            document.getElementsByClassName("gameplay")[0].removeChild(lastElement)
-            document.getElementsByClassName("gameplay")[0].appendChild(cardContainer)
+            document.getElementsByClassName("cardPlayer")[0].removeChild(lastElement)
+            document.getElementsByClassName("cardPlayer")[0].appendChild(cardContainer)
           }
         }
-        document.getElementsByClassName("gameplay")[0].appendChild(cardContainer)
+        document.getElementsByClassName("cardPlayer")[0].appendChild(cardContainer)
       }
       function getName(){
        userName = document.getElementById("name").value
@@ -325,6 +398,26 @@
             let roomData = {"userName" : userName,"room" : room};
             socket.emit("join_room",roomData)
             console.log("connected to "+room)
+            let playerCont = document.createElement('div')
+        playerCont.className = "member"
+        let playerImgCont = document.createElement('div')
+        playerImgCont.innerHTML = `<svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 1280 1536"
+                  style="margin-bottom: 5px; position: relative; left: 7px"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M1280 1271q0 109-62.5 187t-150.5 78H213q-88 0-150.5-78T0 1271q0-85 8.5-160.5t31.5-152t58.5-131t94-89T327 704q131 128 313 128t313-128q76 0 134.5 34.5t94 89t58.5 131t31.5 152t8.5 160.5zm-256-887q0 159-112.5 271.5T640 768T368.5 655.5T256 384t112.5-271.5T640 0t271.5 112.5T1024 384z"
+                  />
+                </svg>`
+        playerCont.appendChild(playerImgCont)
+        let playerName = document.createElement('span')
+        playerName.innerText = userName
+        playerCont.appendChild(playerName)
+        document.getElementsByClassName('members')[0].appendChild(playerCont)
           }
       }
     </script>
